@@ -64,7 +64,7 @@ func Register(extend HandlerExtender) {
 			strings.HasSuffix(origin, "play-with-moby.com") {
 			return true
 		}
-		return false
+		return true
 	}), gh.AllowedOrigins([]string{}))
 
 	// Specific routes

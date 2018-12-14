@@ -2,41 +2,49 @@ version: '3.2'
 services:
     haproxy:
         container_name: haproxy
+        restart: always
         image: mminks/haproxy-docker-logging
-         #build:
-        #    context: ./haproxy
         ports:
             - "80:8080"
         volumes:
             - ./haproxy:/usr/local/etc/haproxy
     pwd:
         container_name: pwd
-        #image: golang
+        restart: always
         build:
             context: .
             dockerfile: Dockerfile
+            args:
+                - http_proxy=http://191.191.29.66:3128
+                - https_proxy=http://191.191.29.66:3128
         ports:
             - "3000:3000"
-        #command: /bin/sh -c 'ssh-keygen -N "" -t rsa -f /etc/ssh/ssh_host_rsa_key >/dev/null; cd /go/src/github.com/play-with-docker/play-with-docker; go run api.go -save /pwd/sessions -name l2'
         volumes:
             - /var/run/docker.sock:/var/run/docker.sock
-        #    - $GOPATH/src:/go/src
-        #    - sessions:/pwd
     l2:
         container_name: l2
-        #image: golang
+        restart: always
         build:
             context: .
             dockerfile: Dockerfile.l2
-        #command: /bin/sh -c 'ssh-keygen -N "" -t rsa -f /etc/ssh/ssh_host_rsa_key >/dev/null; cd /go/src/github.com/play-with-docker/play-with-docker/router/l2; go run l2.go -ssh_key_path /etc/ssh/ssh_host_rsa_key -name l2 -save /pwd/networks'
+            args:
+                - http_proxy=http://191.191.29.66:3128
+                - https_proxy=http://191.191.29.66:3128
         volumes:
-        #    - $GOPATH/src:/go/src
             - /var/run/docker.sock:/var/run/docker.sock
-        #    - networks:/pwd
         ports:
             - "8022:22"
             - "8053:53"
             - "443:443"
-#volumes:
-#    sessions:
-#    networks:
+    docker-cleanup:
+        restart: always
+        image: quay.io/gitlab/gitlab-runner-docker-cleanup
+        volumes:
+            - /var/run/docker.sock:/var/run/docker.sock
+        environment:
+            - LOW_FREE_SPACE=10G
+            - EXPECTED_FREE_SPACE=20G
+            - LOW_FREE_FILES_COUNT=1048576
+            - EXPECTED_FREE_FILES_COUNT=2097152
+            - DEFAULT_TTL=10m
+            - USE_DF=1
